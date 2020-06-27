@@ -9,15 +9,30 @@ namespace Akeem.Web.Tools
 {
     public static class MurmurHashUtil
     {
-        public static string ToHash(string code)
+        const string Str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        public static string ToHash1(string code)
         {
             StringBuilder sb = new StringBuilder();
             var bytes = GetByte(code);
             foreach (var item in bytes)
             {
                 sb.Append(String.Format("{0:x}", Convert.ToInt32(item)));
-            }
+            } 
             return sb.ToString();
+        }
+
+        public static string ToHash(string code)
+        {
+            byte[] b = new byte[4];
+            new System.Security.Cryptography.RNGCryptoServiceProvider().GetBytes(b);
+            Random r = new Random(BitConverter.ToInt32(b, 0));
+            string s = null;
+        
+            for (int i = 0; i < 6; i++)
+            {
+                s += Str.Substring(r.Next(0, Str.Length - 1), 1);
+            }
+            return s;
         }
 
         public static byte [] GetByte(string code)
