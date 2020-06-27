@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Akeem.Web.Tools.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -23,6 +25,14 @@ namespace Akeem.Web.Tools
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+
+            services.Configure<Models.ShortUrlSetting>(Configuration.GetSection("ShortUrlSetting"));
+            ShortUrlSetting shortUrlSetting = new ShortUrlSetting();
+            Configuration.Bind("ShortUrlSetting", shortUrlSetting);
+
+            services.AddDbContext<Tools.Models.ToolsContext>(options => options.UseMySql(shortUrlSetting.Connection));
+
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -44,9 +54,10 @@ namespace Akeem.Web.Tools
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                endpoints.MapControllers();
+                //endpoints.MapControllerRoute(
+                //    name: "default",
+                //    pattern: "{controller=Home}/{action=Index}/{id?}");
             });
         }
     }
