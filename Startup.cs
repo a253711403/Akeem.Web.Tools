@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Akeem.Web.Tools.Services;
 
 namespace Akeem.Web.Tools
 {
@@ -31,8 +32,7 @@ namespace Akeem.Web.Tools
             Configuration.Bind("ShortUrlSetting", shortUrlSetting);
 
             services.AddDbContext<Tools.Models.ToolsContext>(options => options.UseMySql(shortUrlSetting.Connection));
-
-
+            services.AddScoped<UrlServices>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -55,9 +55,6 @@ namespace Akeem.Web.Tools
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                //endpoints.MapControllerRoute(
-                //    name: "default",
-                //    pattern: "{controller=Home}/{action=Index}/{id?}");
             });
         }
     }

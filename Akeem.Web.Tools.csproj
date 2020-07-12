@@ -18,6 +18,10 @@
     <PackageReference Include="System.Data.HashFunction.MurmurHash" Version="2.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Akeem.Web.CommonUtils\Akeem.Web.CommonUtils.csproj" />
+  </ItemGroup>
+
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
 
 

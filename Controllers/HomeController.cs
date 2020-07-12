@@ -1,4 +1,6 @@
-﻿using Akeem.Web.Tools.Models;
+﻿using Akeem.Web.CommonUtils;
+using Akeem.Web.Tools.Models;
+using Akeem.Web.Tools.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System;
@@ -11,15 +13,14 @@ namespace Akeem.Web.Tools.Controllers
     [Route("/")]
     public class HomeController : Controller
     {
-
         private readonly IOptions<ShortUrlSetting> options;
 
-        public ToolsContext ToolsContext { get; }
+        public UrlServices UrlServices { get; }
 
-        public HomeController(ToolsContext toolsContext, IOptions<ShortUrlSetting> options)
+        public HomeController(IOptions<ShortUrlSetting> options, UrlServices urlServices)
         {
-            this.ToolsContext = toolsContext;
             this.options = options;
+            this.UrlServices = urlServices;
         }
 
         [HttpGet("/Home/Compress")]
@@ -29,31 +30,13 @@ namespace Akeem.Web.Tools.Controllers
         }
 
         [HttpPost("/Home/Compress")]
-        public async Task<IActionResult> Compress(ToolShortUrl urlModel)
+        public async Task<IActionResult> CompressPost(ToolShortUrl urlModel)
         {
             if (string.IsNullOrEmpty(urlModel.Url))
             {
                 return BadRequest();
             }
-
-            ToolShortUrl firstModel = ToolsContext.ToolShortUrl.FirstOrDefault(item => urlModel.Url.Equals(item.Url));
-            if (firstModel == null)
-            {
-                string hash = MurmurHashUtil.ToHash(urlModel.Url);
-                firstModel = new ToolShortUrl()
-                {
-                    Compress = hash,
-                    ExpiredTime = DateTime.Now.AddYears(1),
-                    Url = urlModel.Url,
-                    CreTime = DateTime.Now
-                };
-                var result = await ToolsContext.AddAsync(firstModel);
-                if (await ToolsContext.SaveChangesAsync() == 0)
-                {
-                    return BadRequest();
-                }
-            }
-
+            ToolShortUrl firstModel = await UrlServices.CompressAsync(urlModel);
             return Json(new
             {
                 firstModel.Compress,
@@ -63,35 +46,20 @@ namespace Akeem.Web.Tools.Controllers
             });
         }
 
+        [HttpGet("/api/short")]
+        [IsJsonpCallback]
+        public async Task<IActionResult> CompressGet(ToolShortUrl urlModel)
+        {
+            return await this.CompressPost(urlModel);
+        }
+
         [HttpGet("/{id}")]
         public async Task<IActionResult> GetAsync(string id)
         {
-            ToolShortUrl urlModel = ToolsContext.ToolShortUrl.FirstOrDefault(item => id.Equals(item.Compress));
+            ToolShortUrl urlModel = UrlServices.GetModel(id);
             if (urlModel != null)
             {
-                try
-                {
-                    ToolShortUrlReport urlReport = ToolsContext.ToolShortUrlReport.FirstOrDefault(item => item.Id == urlModel.Id);
-                    if (urlReport == null)
-                    {
-                        urlReport = new ToolShortUrlReport()
-                        {
-                            Id = urlModel.Id,
-                            WatchNum = 1
-                        };
-                        _ = await ToolsContext.ToolShortUrlReport.AddAsync(urlReport);
-                    }
-                    else
-                    {
-                        urlReport.WatchNum++;
-                    }
-                    _ = await ToolsContext.SaveChangesAsync();
-                }
-                catch (Exception ex)
-                {
-
-                }
-
+                await UrlServices.AddRequsetAsync(urlModel);
                 return Redirect(urlModel.Url);
             }
             return RedirectToAction("Error_404", "Home");
